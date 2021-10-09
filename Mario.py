@@ -13,8 +13,8 @@ class Mario:
         # self.frame = (self.frame + 1) % 8
         self.x += 1.5*self.dir
         self.y += self.acceleration
-        self._jump()
         self.handle_events()
+        self._jump()
     def draw(self):
         self.image.draw_now(self.x, self.y)
         # self.image.clip_draw(self.frame*40, 0, 40, 40, self.x, self.y)
@@ -35,7 +35,7 @@ class Mario:
                     self.dir = 1
                 elif event.key == SDLK_LEFT:
                     self.dir = -1
-                elif event.key == SDLK_UP:
+                elif event.key == SDLK_UP and not self.jump:
                     self.jump = True
                     self.acceleration = 5
                     self.buffer_y = self.y
