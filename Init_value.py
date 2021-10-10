@@ -1,0 +1,3 @@
+Game_loop = True
+WINDOW_WIDTH = 720
+WINDOW_HEIGHT = 480

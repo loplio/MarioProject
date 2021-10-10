@@ -1,21 +1,21 @@
-from pico2d import *
 from Mario import *
-Game_loop = True
+from Map import *
 
-def handle_events():
-    global Game_loop
-    events = get_events()
-    for event in events:
-        if event.type == SDL_QUIT:
-            Game_loop = False
-        elif event.type == SDL_QUIT and event.key == SDLK_ESCAPE:
-            Game_loop = False
-
-open_canvas()
+open_canvas(Init_value.WINDOW_WIDTH, Init_value.WINDOW_HEIGHT)
 mario = Mario()
-while Game_loop:
-    start_time = get_time()
+map = Map()
+def Window_Pos():
+    map.window_move_len = mario.x - Init_value.WINDOW_WIDTH/2
+while Init_value.Game_loop:
     clear_canvas()
+    cur_time = get_time() - cur_time
+    # print(cur_time)
+    Window_Pos()            # 업데이트
+    mario.update(cur_time)
+
+    map.draw()              # 그리기
     mario.draw()
-    mario.update()
+    update_canvas()
+
+    delay(0.02)
 close_canvas()
