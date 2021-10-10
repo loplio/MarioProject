@@ -55,6 +55,6 @@ class Map:
     def draw(self):
         index = 0
         for tile in map:
-            if (index % self.tiles_Row) * 32 + self.window_move_len >= 0 and (index % self.tiles_Row)*32 + self.window_move_len <= Init_value.WINDOW_WIDTH:
-                self.image.clip_draw((tile % 5)*32, (tile // 5) * 32, 32, 32, (index % self.tiles_Row)*32 + 16, 464 - (index // self.tiles_Row)*32)
+            if (index % self.tiles_Row + 1) * 32 + self.window_move_len >= 0 and (index % self.tiles_Row)*32 + self.window_move_len <= Init_value.WINDOW_WIDTH:
+                self.image.clip_draw((tile % 5)*32, (tile // 5) * 32, 32, 32, (index % self.tiles_Row)*32 + self.window_move_len + 16, 464 - (index // self.tiles_Row)*32)
             index += 1

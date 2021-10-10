@@ -2,16 +2,18 @@ from pico2d import *
 import Init_value
 class Mario:
     def __init__(self):
-        self.x, self.y = 400, 108
-        self.frame = 0
+        self.x, self.y = Init_value.WINDOW_WIDTH//2, 108
+        self.frame = 5
         self.image = load_image('Mario.png')
         self.dir = 0
         self.jump = False
         self.acceleration = 0
         self.buffer_y = 0
         self.clash_key = 0
+        self.point_view = Init_value.WINDOW_WIDTH//2
     def update(self, cur_time):
         # print('updating.....')
+        # print(cur_time)
         if self.dir == 1:                       # 프레임
             self.frame = self.frame % 4 + 5
         elif self.dir == -1:
@@ -21,7 +23,7 @@ class Mario:
         self.handle_events()                    # 이벤트
         self._jump()                            # 점프
     def draw(self):
-        self.image.clip_draw(self.frame*25, 0, 25, 25, self.x, self.y)
+        self.image.clip_draw(self.frame*25, 0, 25, 25, self.point_view, self.y)
     def _jump(self):
         if self.jump == True:
             self.acceleration = self.acceleration - 0.98 * 0.34
@@ -31,9 +33,7 @@ class Mario:
                 self.jump = False
     def handle_events(self):
         events = get_events()
-        # print(events)
         for event in events:
-            # print(event.type)
             if event.type == SDL_QUIT:
                 Init_value.Game_loop = False
             elif event.key == SDLK_ESCAPE:
