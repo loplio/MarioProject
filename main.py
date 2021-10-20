@@ -12,14 +12,17 @@ def Window_Pos():
         map.window_move_len = Init_value.WINDOW_WIDTH/2 - mario.x
         mario.point_view = Init_value.WINDOW_WIDTH/2
 while Init_value.Game_loop:
+    cur_time = get_time()
     clear_canvas()
-    # cur_time = get_time() - cur_time
-    # print(cur_time)
     Window_Pos()            # 업데이트
-    mario.update(cur_time)
+    mario.update()
+
     map.draw()              # 그리기
     mario.draw()
     update_canvas()
 
-    delay(0.015)
+    frame = cur_time + 1/Init_value.Game_FPS - get_time()
+    if frame < 0:
+        frame = 0
+    delay(frame)
 close_canvas()

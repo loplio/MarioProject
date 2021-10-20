@@ -1,3 +1,4 @@
 Game_loop = True
+Game_FPS = 50
 WINDOW_WIDTH = 720
 WINDOW_HEIGHT = 480

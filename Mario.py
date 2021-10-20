@@ -11,9 +11,8 @@ class Mario:
         self.buffer_y = 0
         self.clash_key = 0
         self.point_view = Init_value.WINDOW_WIDTH//2
-    def update(self, cur_time):
+    def update(self):
         # print('updating.....')
-        # print(cur_time)
         if self.dir == 1:                       # 프레임
             self.frame = self.frame % 4 + 5
         elif self.dir == -1:
