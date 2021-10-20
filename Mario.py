@@ -6,19 +6,33 @@ class Mario:
         self.frame = 5
         self.image = load_image('Mario.png')
         self.dir = 0
+        self.prev_dir = 1
         self.jump = False
         self.acceleration = 0
         self.buffer_y = 0
         self.clash_key = 0
         self.point_view = Init_value.WINDOW_WIDTH//2
-    def update(self):
-        # print('updating.....')
-        if self.dir == 1:                       # 프레임
+    def _frame(self):
+        if self.jump:
+            if self.dir == 1:
+                self.frame = 9
+            else:
+                self.frame = 4
+        elif self.dir == 1:                       # 프레임
             self.frame = self.frame % 4 + 5
         elif self.dir == -1:
             self.frame = (self.frame + 1) % 4
-        self.x += 5*self.dir                    # 이동
-        self.y += 3*self.acceleration
+        elif self.dir == 0:
+            if self.prev_dir == 1:
+                self.frame = 5
+            else:
+                self.frame = 0
+    def move(self):
+        self.x += 5 * self.dir  # 이동
+        self.y += 3 * self.acceleration
+    def update(self):
+        self._frame()
+        self.move()
         self.handle_events()                    # 이벤트
         self._jump()                            # 점프
     def draw(self):
@@ -41,9 +55,11 @@ class Mario:
                 if event.key == SDLK_RIGHT:
                     self.dir = 1
                     self.clash_key += 1
+                    self.prev_dir = self.dir
                 elif event.key == SDLK_LEFT:
                     self.dir = -1
                     self.clash_key += 1
+                    self.prev_dir = self.dir
                 elif event.key == SDLK_UP and not self.jump:
                     self.jump = True
                     self.acceleration = 5
