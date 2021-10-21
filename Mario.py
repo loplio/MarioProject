@@ -1,5 +1,6 @@
 from pico2d import *
 import Init_value
+import Game_FrameWork
 class Mario:
     def __init__(self):
         self.x, self.y = Init_value.WINDOW_WIDTH//2, 108
@@ -48,9 +49,9 @@ class Mario:
         events = get_events()
         for event in events:
             if event.type == SDL_QUIT:
-                Init_value.Game_loop = False
+                Game_FrameWork.running = False
             elif event.key == SDLK_ESCAPE:
-                Init_value.Game_loop = False
+                Game_FrameWork.pop_state()
             if event.type == SDL_KEYDOWN:
                 if event.key == SDLK_RIGHT:
                     self.dir = 1
