@@ -10,7 +10,7 @@
                         # -백그라운드
                 # -마리오
 stack = None
-running = True
+running = None
 def change_state(state):
     global stack
     if len(stack) > 0:
@@ -35,6 +35,7 @@ def quit():
     pass
 def run(start_state):
     global stack, running
+    running = True
     stack = [start_state]
     start_state.enter()
     while running:

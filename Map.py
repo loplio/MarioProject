@@ -47,14 +47,22 @@ map = [
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
     4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,  # 23개
 ]
+screen_map = []
 class Map:
+    image = None
+    tiles_Row = None
     def __init__(self):
-        self.tiles_Row = 46
-        self.image = load_image('tiles.png')
         self.window_move_len = 0
+        if Map.tiles_Row == None:
+            Map.tiles_Row = 46
+        if Map.image == None:
+            Map.image = load_image('tiles.png')
     def draw(self):
         index = 0
         for tile in map:
-            if (index % self.tiles_Row + 1) * 32 + self.window_move_len >= 0 and (index % self.tiles_Row)*32 + self.window_move_len <= Init_value.WINDOW_WIDTH:
-                self.image.clip_draw((tile % 5)*32, (tile // 5) * 32, 32, 32, (index % self.tiles_Row)*32 + self.window_move_len + 16, 464 - (index // self.tiles_Row)*32)
+            if (index % Map.tiles_Row + 1) * 32 + self.window_move_len >= 0 and (index % Map.tiles_Row)*32 + self.window_move_len <= Init_value.WINDOW_WIDTH:
+                Map.image.clip_draw((tile % 5)*32, (tile // 5) * 32, 32, 32, (index % Map.tiles_Row)*32 + self.window_move_len + 16, 464 - (index // Map.tiles_Row)*32)
+                screen_map.append(tile)
             index += 1
+    def map_return(self):
+        return screen_map

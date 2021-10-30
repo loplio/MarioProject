@@ -1,6 +1,7 @@
 from pico2d import *
 import Game_FrameWork
 import Game_Lobby
+import Init_value
 name = "StartState"
 image = None
 Logo_time = 0
@@ -10,7 +11,7 @@ def enter():
     image = load_image('kpu_credit.png')
 
 def draw():
-    image.draw_now(400, 300)
+    image.clip_draw(40, 60, Init_value.WINDOW_WIDTH, Init_value.WINDOW_HEIGHT, Init_value.WINDOW_WIDTH/2, Init_value.WINDOW_HEIGHT/2)
     update_canvas()
 
 def update():
@@ -19,9 +20,8 @@ def update():
         draw()
         # Logo_time = 0
         Game_FrameWork.change_state(Game_Lobby)
-        print('AAA')
     delay(0.04)
-    Logo_time += 0.02
+    Logo_time += 0.04
 
 def handle_events():
     events = get_events()

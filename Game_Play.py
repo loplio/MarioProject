@@ -1,4 +1,5 @@
 import Game_FrameWork
+import MarioProject.Mario
 from Mario import *
 from Map import *
 
@@ -9,23 +10,28 @@ running = True
 
 def enter():
     global mario, map
-    mario = Mario()
     map = Map()
+    mario = Mario()
 
 def exit():
     global mario, map
-    del(mario)
-    del(map)
+    del mario
+    del map
 
 def update():    # 업데이트
-    clear_canvas()
     Window_Pos()
+    Collision()
     mario.update()
 
 def draw():       # 그리기
+    clear_canvas()
     map.draw()
     mario.draw()
     update_canvas()
+
+def Collision():
+    map_buffer = map.map_return()
+    # print(map_buffer)
 
 def Window_Pos():
     if mario.x < Init_value.WINDOW_WIDTH/2:         # 맨 좌측에선 카메라를 움직이지 않느다.
@@ -41,8 +47,19 @@ def frame_check(cur_time):
         frame = 0
     delay(frame)
 
+def handle_events():
+    events = get_events()
+    for event in events:
+        if event.type == SDL_QUIT:
+            Game_FrameWork.quit()
+        elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
+            Game_FrameWork.quit()
+        else:
+            mario.handle_events(event)
+
 def main():
     cur_time = get_time()
+    handle_events()
     draw()
     update()
     frame_check(cur_time)
