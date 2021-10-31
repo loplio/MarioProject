@@ -1,5 +1,6 @@
 import Game_FrameWork
 import MarioProject.Mario
+import Game_World
 from Mario import *
 from Map import *
 
@@ -12,22 +13,31 @@ def enter():
     global mario, map
     map = Map()
     mario = Mario()
+    Game_World.add_object(map, 0)
+    Game_World.add_object(mario, 1)
 
 def exit():
-    global mario, map
-    del mario
-    del map
+    Game_World.clear()
+    # global mario, map
+    # del mario
+    # del map
 
 def update():    # 업데이트
     Window_Pos()
     Collision()
-    mario.update()
+    for Game_object in Game_World.all_objects():
+        Game_object.update()
+    # mario.update()
 
 def draw():       # 그리기
     clear_canvas()
-    map.draw()
-    mario.draw()
+    for Game_object in Game_World.all_objects():
+        Game_object.draw()
     update_canvas()
+    # clear_canvas()
+    # map.draw()
+    # mario.draw()
+    # update_canvas()
 
 def Collision():
     map_buffer = map.map_return()
