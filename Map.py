@@ -57,6 +57,7 @@ class Map:
             Map.tiles_Row = 46
         if Map.image == None:
             Map.image = load_image('tiles.png')
+
     def draw(self):
         index = 0
         for tile in map:
@@ -64,7 +65,12 @@ class Map:
                 Map.image.clip_draw((tile % 5)*32, (tile // 5) * 32, 32, 32, (index % Map.tiles_Row)*32 + self.window_move_len + 16, 464 - (index // Map.tiles_Row)*32)
                 screen_map.append(tile)
             index += 1
+
     def update(self):
         pass
+
+    def get_bb(self):
+        return 0, 0, 0, 0
+
     def map_return(self):
         return screen_map

@@ -24,7 +24,7 @@ def exit():
 
 def update():    # 업데이트
     Window_Pos()
-    Collision()
+    Collide(mario, map)
     for Game_object in Game_World.all_objects():
         Game_object.update()
     # mario.update()
@@ -39,9 +39,16 @@ def draw():       # 그리기
     # mario.draw()
     # update_canvas()
 
-def Collision():
+def Collide(a, b):
+    left_a, bottom_a, right_a, top_a = a.get_bb()
+    left_b, bottom_b, right_b, top_b = b.get_bb()
+    if left_a > right_b: return False
+    if right_a < left_b: return False
+    if top_a < bottom_b: return False
+    if bottom_a > top_b: return False
     map_buffer = map.map_return()
     # print(map_buffer)
+    return True
 
 def Window_Pos():
     if mario.x < Init_value.WINDOW_WIDTH/2:         # 맨 좌측에선 카메라를 움직이지 않느다.

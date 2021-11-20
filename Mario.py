@@ -30,6 +30,7 @@ class IdleState:
         if event == LEFT_DOWN:
             mario.dir = -1
         mario.velocity = 0
+        mario.crash_key = 0
 
     def exit(mario, event):
         pass
@@ -50,29 +51,13 @@ class RunState:
         mario.velocity = RUN_SPEED_PPS
         if event == RIGHT_DOWN:
             mario.dir = 1
-        if event == LEFT_DOWN:
-            mario.dir = -1
-        # if event == RIGHT_DOWN:
-        #     mario.clash_key += 1
-        #     mario.prev_dir = mario.dir
-        #     mario.velocity += 5
-        # elif event == LEFT_DOWN:
-        #     mario.clash_key += 1
-        #     mario.prev_dir = mario.dir
-        #     mario.velocity -= 5
-        # elif event == RIGHT_UP or event == LEFT_UP:
-        #     mario.clash_key -= 1
-        #     if mario.clash_key == 0:
-        #         mario.dir = 0
-        #     elif mario.clash_key == 1:
-        #         if (mario.dir > 0 and event.key == SDLK_RIGHT) or (mario.dir < 0 and event.key == SDLK_LEFT):
-        #             mario.dir *= -1
-        #             mario.prev_dir *= -1
-        #     if event == RIGHT_UP:
-        #         mario.velocity -= 5
-        #     else:
-        #         mario.velocity += 5
+            mario.crash_key += 1
+            print("Right - crash_key: ", mario.crash_key)
 
+        elif event == LEFT_DOWN:
+            mario.dir = -1
+            mario.crash_key += 1
+            print("Left - crash_key: ", mario.crash_key)
 
     def exit(mario, event):
         pass
@@ -83,7 +68,6 @@ class RunState:
         else:
             mario.frame = (mario.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * Game_FrameWork.frame_time) % 4
         mario.x += mario.dir * mario.velocity * Game_FrameWork.frame_time
-        print(mario.dir)
     def draw(mario):
         if mario.dir >= 0:
             mario.image.clip_draw(int(mario.frame + 1) * 25, 0, 25, 25, mario.point_view, mario.y)
@@ -130,11 +114,11 @@ class Mario:
         self.frame = 5
         self.image = load_image('Mario.png')
         self.dir = 1
-        self.velocity = 0
         self.prev_dir = 1
+        self.velocity = 0
         self.acceleration = 0
         self.buffer_y = 0
-        self.clash_key = 0
+        self.crash_key = 0
         self.point_view = Init_value.WINDOW_WIDTH//2
         self.event_que = []
         self.cur_state = IdleState
@@ -146,17 +130,17 @@ class Mario:
     def add_event(self, event):
         self.event_que.insert(0, event)
 
+    def get_bb(self):
+        return self.x - 13, self.y - 13, self.x + 13, self.y + 13
+
     def update(self):
         self.cur_state.do(self)
         if len(self.event_que) > 0:
             event = self.event_que.pop()
-            print(self.event_que, "update", event)
+            # print(self.event_que, "update", event)
             self.cur_state.exit(self, event)
-            print("1")
             self.cur_state = next_state_table[self.cur_state][event]
-            print("2")
             self.cur_state.enter(self, event)
-            print("3")
 
     def draw(self):
         self.cur_state.draw(self)
@@ -165,28 +149,39 @@ class Mario:
         if (event.type, event.key) in key_event_table:
             key_event = key_event_table[(event.type, event.key)]
             if key_event in next_state_table[self.cur_state]:
-                self.add_event(key_event)
+                if self.crash_key != 2 or (key_event != RIGHT_UP and key_event != LEFT_UP):
+                    self.add_event(key_event)
+                else:
+                    self.crash_key -= 1
+                    if (self.dir == 1 and key_event == RIGHT_UP) or (self.dir == -1 and key_event == LEFT_UP):
+                        self.dir *= -1
+                    print("reason crash crash_key -1 down  , crash_key: ", self.crash_key)
             else:
                 if self.cur_state == JumpState and key_event == 0:
                     self.dir = 1
+                    self.crash_key += 1
                     self.velocity = RUN_SPEED_PPS
-                    print('first')
+                    # print('first')
                 elif self.cur_state == JumpState and key_event == 1:
                     self.dir = -1
+                    self.crash_key += 1
                     self.velocity = RUN_SPEED_PPS
-                    print('second')
+                    # print('second')
                 elif self.cur_state == JumpState and key_event == 2:
-                    self.velocity = 0
-                    print('thrid')
+                    self.crash_key -= 1
+                    if self.crash_key == 0:
+                        self.velocity = 0
+                    elif (self.dir == 1 and key_event == RIGHT_UP) or (self.dir == -1 and key_event == LEFT_UP):
+                        self.dir *= -1
+                    # print('thrid')
                 elif self.cur_state == JumpState and key_event == 3:
-                    print('four')
-                    self.velocity = 0
+                    # print('four')
+                    self.crash_key -= 1
+                    if self.crash_key == 0:
+                        self.velocity = 0
+                    elif (self.dir == 1 and key_event == RIGHT_UP) or (self.dir == -1 and key_event == LEFT_UP):
+                        self.dir *= -1
 
-            # if 'JUMP_END_1' in key_event_table['JumpState'] == True\
-            #         and 'JUMP_END_2' in key_event_table['JumpState'] == True:
-            #     print("AAA")
-            #     key_event = key_event_table[(event.type, event.key)]
-            #     self.add_event(key_event)
 
 next_state_table = {
     IdleState: {RIGHT_UP: RunState, LEFT_UP: RunState,
