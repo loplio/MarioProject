@@ -24,7 +24,7 @@ key_event_table = {
 
 class IdleState:
     def enter(mario, event):
-        print("IdleState ENter")
+        print("                               #  IdleState ENter")
         if event == RIGHT_DOWN:
             mario.dir = 1
         if event == LEFT_DOWN:
@@ -47,7 +47,7 @@ class IdleState:
 
 class RunState:
     def enter(mario, event):
-        print("RunState ENter")
+        print("                               #  RunState ENter")
         mario.velocity = RUN_SPEED_PPS
         if event == RIGHT_DOWN:
             mario.dir = 1
@@ -129,6 +129,7 @@ class Mario:
 
     def update(self):
         self.cur_state.do(self)
+        print(self.cur_state)
         if len(self.event_que) > 0:
             event = self.event_que.pop()
             # print(self.event_que, "update", event)
@@ -140,10 +141,10 @@ class Mario:
         self.cur_state.draw(self)
 
     def landing(self):
-        print("-----------------------endOfJump")
+        print("                               #  endOfJump")
         self.acceleration = 0
         print("landing acceleration=", self.acceleration)
-
+        print(self.velocity)
         if self.velocity > 0:
             self.add_event(JUMP_END_2)
         else:
@@ -151,9 +152,9 @@ class Mario:
 
     def floating(self):
         left, right, bottom = int((self.x - self.mario_w/2) // server.map.tile_w), int((self.x + self.mario_w/2) // server.map.tile_w), int((self.y - self.mario_h/2) // server.map.tile_h)
-        print("AAAA====================AAAA", ((server.TILE_W_N - bottom - 1) * server.map.tiles_Row) + left, bottom,
-              left, ((server.TILE_W_N - bottom - 1) * server.map.tiles_Row) + right, bottom, right)
-        print(server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + left],server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + right])
+        # print("AAAA====================AAAA", ((server.TILE_W_N - bottom - 1) * server.map.tiles_Row) + left, bottom,
+        #       left, ((server.TILE_W_N - bottom - 1) * server.map.tiles_Row) + right, bottom, right)
+        # print(server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + left],server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + right])
         if server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + left] == 0\
                 and server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + right] == 0:
             self.state_floating = True
@@ -201,9 +202,11 @@ class Mario:
 next_state_table = {
     IdleState: {RIGHT_UP: RunState, LEFT_UP: RunState,
                 RIGHT_DOWN: RunState, LEFT_DOWN: RunState,
-                JUMP_KEY: JumpState},
+                JUMP_KEY: JumpState, FLOATING: JumpState,
+                JUMP_END_1: IdleState},
     RunState: {RIGHT_UP: IdleState, LEFT_UP: IdleState,
                LEFT_DOWN: RunState, RIGHT_DOWN: RunState,
-               JUMP_KEY: JumpState, FLOATING: JumpState},
-    JumpState: {JUMP_END_1: IdleState, JUMP_END_2: RunState}
+               JUMP_KEY: JumpState, FLOATING: JumpState,
+               JUMP_END_2: RunState},
+    JumpState: {JUMP_END_1: IdleState, JUMP_END_2: RunState, FLOATING: JumpState}
 }

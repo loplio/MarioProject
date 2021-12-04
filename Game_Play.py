@@ -19,70 +19,51 @@ def enter():
 
 def exit():
     Game_World.clear()
-    # global mario, map
-    # del mario
-    # del map
 
 def update():    # 업데이트
     Window_Pos()
     global pIndex, Index
+    predictCollide()
     for Game_object in Game_World.all_objects():
         Game_object.update()
-    server.map.append_collide_map()
-    while server.map.collide_map:
-        Collide(server.mario, server.map)
-    pIndex = Index
-    # print(pIndex , "=========================================================")
-    # mario.update()
 
 def draw():       # 그리기
     clear_canvas()
     for Game_object in Game_World.all_objects():
         Game_object.draw()
     update_canvas()
-    # clear_canvas()
-    # map.draw()
-    # mario.draw()
-    # update_canvas()
 
-def Collide(a, b):
-    left_a, bottom_a, right_a, top_a = a.get_bb()
-    left_b, bottom_b, right_b, top_b, cIndex = b.get_bb()
-    if left_a > right_b: return False
-    if right_a < left_b: return False
-    if top_a < bottom_b: return False
-    if bottom_a > top_b: return False
-    nIndex = int(server.mario.y // server.map.tile_h), int(server.mario.x // server.map.tile_w)
-    CheckCollideBlock = server.map.map[((server.TILE_W_N - cIndex[0] - 1)*server.map.tiles_Row) + cIndex[1]]
-    # print('nIndex=', nIndex[0], nIndex[1], server.mario.y, server.mario.y+server.mario.mario_h/2,server.mario.y-server.mario.mario_h/2)
-    # print('cIndex=', cIndex[0], cIndex[1], (bottom_b+top_b)/2)
-    global pIndex, Index
-    if pIndex == None:
-        pIndex = nIndex
-    # print('pIndex=', pIndex[0])
-    # print(nIndex[0], ">", cIndex[0], "or", cIndex[0], ">=", nIndex[0], "and", pIndex[0], ">", nIndex[0])
-    if CheckCollideBlock != 0:
-        if nIndex[1] < cIndex[1]:
-            server.mario.x = cIndex[1] * server.map.tile_w - server.mario.mario_w / 2 - 1
-        elif nIndex[1] > cIndex[1]:
-            server.mario.x = (cIndex[1] + 1) * server.map.tile_w + server.mario.mario_w / 2 + 1
-        if nIndex[0] < cIndex[0]:
-            # print("prev=", server.mario.y)
-            server.mario.y = cIndex[0] * server.map.tile_h - server.mario.mario_h / 2 - 1
-            server.mario.acceleration = 0
-            # print("now=", server.mario.y)
-            # print("-------------yCollide")
-        elif nIndex[0] > cIndex[0] or (cIndex[0] >= nIndex[0] and pIndex[0] > nIndex[0]):
-            print("prev=", cIndex)
-            if not(nIndex[0] > cIndex[0]):
-                cIndex = cIndex[0] + abs(pIndex[0] - cIndex[0]) - 1, cIndex[1]
-            print("now=", cIndex)
-            server.mario.y = (cIndex[0] + 1) * server.map.tile_h + server.mario.mario_h / 2 + 1
-            server.mario.landing()
-            print("착지----------------------------------------------(")
-    # print('now x=', server.mario.x, 'y=', server.mario.y)
-    Index = nIndex
-    return True
+def predictCollide():
+    nIndex = int(server.mario.x // server.map.tile_w), int(server.mario.y // server.map.tile_h)
+    dx, dy = server.mario.dir * server.mario.velocity * Game_FrameWork.frame_time, 3 * server.mario.acceleration
+    mx, my = server.mario.x, server.mario.y
+    LB, RB, LT, RT = server.map.get_collide_map()
+    if dx > 0:
+        for nIndex_y in range(RB[1], RT[1]):
+            cIndex = nIndex[0] + 1, nIndex_y
+            CheckCollideBlock = server.map.map[((server.TILE_W_N - nIndex_y - 1) * server.map.tiles_Row) + cIndex[0]]
+            if CheckCollideBlock != 0 and cIndex[0] * server.map.tile_w < (mx + dx + server.mario.mario_w / 2):
+                    server.mario.x = int(cIndex[0]*server.map.tile_w - server.mario.mario_w/2 - dx)
+    elif dx < 0:
+        for nIndex_y in range(LB[1], LT[1]):
+            cIndex = nIndex[0] - 1, nIndex_y
+            CheckCollideBlock = server.map.map[((server.TILE_W_N - nIndex_y - 1) * server.map.tiles_Row) + cIndex[0]]
+            if CheckCollideBlock != 0 and (cIndex[0]+1) * server.map.tile_w > (mx + dx - server.mario.mario_w / 2):
+                    server.mario.x = (cIndex[0]+1)*server.map.tile_w + server.mario.mario_w/2 - dx
+    if dy > 0:
+        for nIndex_x in range(LT[0], RT[0]):
+            cIndex = nIndex_x, nIndex[1] + 1
+            CheckCollideBlock = server.map.map[((server.TILE_W_N - cIndex[1] - 1) * server.map.tiles_Row) + nIndex_x]
+            if CheckCollideBlock != 0 and cIndex[1] * server.map.tile_h < (my + dy + server.mario.mario_h / 2):
+                server.mario.y = cIndex[1] * server.map.tile_h - server.mario.mario_h / 2 - 1
+                server.mario.acceleration = 0
+    elif dy < 0:
+        for nIndex_x in range(LB[0], RB[0]):
+            cIndex = nIndex_x, nIndex[1] - 1
+            CheckCollideBlock = server.map.map[((server.TILE_W_N - cIndex[1] - 1) * server.map.tiles_Row) + nIndex_x]
+            if CheckCollideBlock != 0 and (cIndex[1]+1) * server.map.tile_h > (my + dy - server.mario.mario_h / 2):
+                server.mario.y = (cIndex[1]+1) * server.map.tile_h + server.mario.mario_h / 2 + 1
+                server.mario.landing()
 
 def Window_Pos():
     if server.mario.x < Init_value.WINDOW_WIDTH/2:         # 맨 좌측에선 카메라를 움직이지 않느다.

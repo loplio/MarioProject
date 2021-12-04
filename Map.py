@@ -72,20 +72,15 @@ class Map:
         pass
 
     def get_bb(self):
-        collideIndex = self.collide_map.pop()
-        tile_xPos = collideIndex[1] * self.tile_w
-        tile_yPos = collideIndex[0] * self.tile_h
-        return tile_xPos, tile_yPos, tile_xPos + self.tile_w, tile_yPos + self.tile_h, collideIndex
+        pass
 
-    def append_collide_map(self):
-        # print('pos=', server.mario.y, server.mario.y + server.mario.mario_h / 2,
-        #       server.mario.y - server.mario.mario_h / 2)
+    def get_collide_map(self):
         left, right = int((server.mario.x - server.mario.mario_w / 2) // self.tile_w), int(
             (server.mario.x + server.mario.mario_w / 2) // self.tile_w) + 1
         bottom, top = int((server.mario.y - server.mario.mario_h / 2) // self.tile_h), int(
             (server.mario.y + server.mario.mario_h / 2) // self.tile_h) + 1
-        # print('up=', top, 'bottom=', bottom, 'left=', left, 'right=', right)
-        for i in range(bottom, top):
-            for j in range(left, right):
-                self.collide_map.append((i, j))
-        print(self.collide_map)
+        LB = left, bottom
+        RB = right, bottom
+        LT = left, top
+        RT = right, top
+        return LB, RB, LT, RT
