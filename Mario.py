@@ -2,7 +2,7 @@ from pico2d import *
 import Init_value
 import Game_FrameWork
 import server
-RIGHT_DOWN, LEFT_DOWN, RIGHT_UP, LEFT_UP, JUMP_KEY, JUMP_END_1, JUMP_END_2, FLOATING = range(8)
+RIGHT_DOWN, LEFT_DOWN, RIGHT_UP, LEFT_UP, JUMP_KEY, JUMP_END_1, JUMP_END_2, FLOATING, DEAD, RESTART = range(10)
 
 PIXEL_PER_METER = (32.0 / 1.0)
 RUN_SPEED_KMPH = 20.0
@@ -103,6 +103,30 @@ class JumpState:
         mario.image.clip_draw(int(mario.frame) * mario.mario_w, 0, mario.mario_w, mario.mario_h, mario.point_view, mario.y)
         draw_rectangle(mario.point_view - mario.mario_w / 2, mario.y - mario.mario_h / 2, mario.point_view + mario.mario_w / 2, mario.y + mario.mario_h / 2)
 
+class DeadState:
+    def enter(mario, event):
+        print("                               #  DeadState ENter")
+        mario.acceleration = 5
+        mario.crash_key = 0
+        mario.frame = 10
+        mario.state_dead = True
+
+    def exit(mario, event):
+        print("DeadState Exit")
+        mario.state_dead = False
+
+    def do(mario):
+        mario.y += 3 * mario.acceleration
+        mario.acceleration = mario.acceleration - 0.98 * 0.34
+        if mario.y < 0:
+            mario.x, mario.y = Init_value.WINDOW_WIDTH//2, 110
+            mario.add_event(RESTART)
+
+    def draw(mario):
+        mario.image.clip_draw(int(mario.frame) * mario.mario_w, 0, mario.mario_w, mario.mario_h, mario.point_view, mario.y)
+        draw_rectangle(mario.point_view - mario.mario_w / 2, mario.y - mario.mario_h / 2, mario.point_view + mario.mario_w / 2, mario.y + mario.mario_h / 2)
+
+
 class Mario:
     def __init__(self):
         self.x, self.y = Init_value.WINDOW_WIDTH//2, 110
@@ -115,6 +139,7 @@ class Mario:
         self.mario_w = 25
         self.mario_h = 25
         self.crash_key = 0
+        self.state_dead = False
         self.state_floating = False
         self.point_view = Init_value.WINDOW_WIDTH//2
         self.event_que = []
@@ -129,7 +154,7 @@ class Mario:
 
     def update(self):
         self.cur_state.do(self)
-        print(self.cur_state)
+        # print(self.cur_state)
         if len(self.event_que) > 0:
             event = self.event_que.pop()
             # print(self.event_que, "update", event)
@@ -203,10 +228,12 @@ next_state_table = {
     IdleState: {RIGHT_UP: RunState, LEFT_UP: RunState,
                 RIGHT_DOWN: RunState, LEFT_DOWN: RunState,
                 JUMP_KEY: JumpState, FLOATING: JumpState,
-                JUMP_END_1: IdleState},
+                JUMP_END_1: IdleState, DEAD: DeadState},
     RunState: {RIGHT_UP: IdleState, LEFT_UP: IdleState,
                LEFT_DOWN: RunState, RIGHT_DOWN: RunState,
                JUMP_KEY: JumpState, FLOATING: JumpState,
-               JUMP_END_2: RunState},
-    JumpState: {JUMP_END_1: IdleState, JUMP_END_2: RunState, FLOATING: JumpState}
+               JUMP_END_2: RunState, DEAD: DeadState},
+    JumpState: {JUMP_END_1: IdleState, JUMP_END_2: RunState,
+                FLOATING: JumpState, DEAD: DeadState},
+    DeadState: {DEAD: DeadState, RESTART: IdleState}
 }
