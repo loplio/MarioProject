@@ -1,8 +1,10 @@
 from pico2d import *
 import Init_value
 import Game_FrameWork
+import Game_World
 import server
-RIGHT_DOWN, LEFT_DOWN, RIGHT_UP, LEFT_UP, JUMP_KEY, JUMP_END_1, JUMP_END_2, FLOATING, DEAD, RESTART = range(10)
+from fireball import FireBall
+RIGHT_DOWN, LEFT_DOWN, RIGHT_UP, LEFT_UP, JUMP_KEY, JUMP_END_1, JUMP_END_2, SPACE, FLOATING, DEAD, RESTART = range(11)
 
 PIXEL_PER_METER = (32.0 / 1.0)
 RUN_SPEED_KMPH = 20.0
@@ -19,7 +21,8 @@ key_event_table = {
     (SDL_KEYDOWN, SDLK_LEFT): LEFT_DOWN,
     (SDL_KEYUP, SDLK_RIGHT): RIGHT_UP,
     (SDL_KEYUP, SDLK_LEFT): LEFT_UP,
-    (SDL_KEYDOWN, SDLK_UP): JUMP_KEY
+    (SDL_KEYDOWN, SDLK_UP): JUMP_KEY,
+    (SDL_KEYDOWN, SDLK_SPACE): SPACE
 }
 
 class IdleState:
@@ -42,8 +45,9 @@ class IdleState:
             mario.frame = 0
 
     def draw(mario):
-        mario.image.clip_draw(int(mario.frame) * mario.mario_w, 0, mario.mario_w, mario.mario_h, mario.point_view, mario.y)
-        draw_rectangle(mario.point_view - mario.mario_w / 2, mario.y - mario.mario_h / 2, mario.point_view + mario.mario_w / 2, mario.y + mario.mario_h / 2)
+        if not(mario.InvincibleTime > 0 and int(mario.InvincibleTime // 0.1) & 1):
+            mario.image.clip_draw(int(mario.frame) * mario.mario_w, 0, mario.mario_w, mario.mario_h, mario.point_view, mario.y)
+            draw_rectangle(mario.point_view - mario.mario_w / 2, mario.y - mario.mario_h / 2, mario.point_view + mario.mario_w / 2, mario.y + mario.mario_h / 2)
 
 class RunState:
     def enter(mario, event):
@@ -72,11 +76,13 @@ class RunState:
             mario.add_event(FLOATING)
 
     def draw(mario):
-        if mario.dir >= 0:
-            mario.image.clip_draw(int(mario.frame + 1) * mario.mario_w, 0, mario.mario_w, mario.mario_h, mario.point_view, mario.y)
-        else:
-            mario.image.clip_draw(int(mario.frame) * mario.mario_w, 0, mario.mario_w, mario.mario_h, mario.point_view, mario.y)
-        draw_rectangle(mario.point_view - mario.mario_w / 2, mario.y - mario.mario_h / 2, mario.point_view + mario.mario_w / 2, mario.y + mario.mario_h / 2)
+        print(mario.InvincibleTime)
+        if not(mario.InvincibleTime > 0 and int(mario.InvincibleTime // 0.1) & 1):
+            if mario.dir >= 0:
+                mario.image.clip_draw(int(mario.frame + 1) * mario.mario_w, 0, mario.mario_w, mario.mario_h, mario.point_view, mario.y)
+            else:
+                mario.image.clip_draw(int(mario.frame) * mario.mario_w, 0, mario.mario_w, mario.mario_h, mario.point_view, mario.y)
+            draw_rectangle(mario.point_view - mario.mario_w / 2, mario.y - mario.mario_h / 2, mario.point_view + mario.mario_w / 2, mario.y + mario.mario_h / 2)
 
 class JumpState:
     def enter(mario, event):
@@ -100,8 +106,9 @@ class JumpState:
         mario.acceleration = mario.acceleration - 0.98 * 0.34
 
     def draw(mario):
-        mario.image.clip_draw(int(mario.frame) * mario.mario_w, 0, mario.mario_w, mario.mario_h, mario.point_view, mario.y)
-        draw_rectangle(mario.point_view - mario.mario_w / 2, mario.y - mario.mario_h / 2, mario.point_view + mario.mario_w / 2, mario.y + mario.mario_h / 2)
+        if not(mario.InvincibleTime > 0 and int(mario.InvincibleTime // 0.1) & 1):
+            mario.image.clip_draw(int(mario.frame) * mario.mario_w, 0, mario.mario_w, mario.mario_h, mario.point_view, mario.y)
+            draw_rectangle(mario.point_view - mario.mario_w / 2, mario.y - mario.mario_h / 2, mario.point_view + mario.mario_w / 2, mario.y + mario.mario_h / 2)
 
 class DeadState:
     def enter(mario, event):
@@ -110,6 +117,11 @@ class DeadState:
         mario.crash_key = 0
         mario.frame = 10
         mario.state_dead = True
+        if mario.state_super > 0:
+            mario.state_super = 0
+            mario.mario_w = 25
+            mario.mario_h = 25
+            mario.image = load_image('mario.png')
 
     def exit(mario, event):
         print("DeadState Exit")
@@ -126,10 +138,9 @@ class DeadState:
         mario.image.clip_draw(int(mario.frame) * mario.mario_w, 0, mario.mario_w, mario.mario_h, mario.point_view, mario.y)
         draw_rectangle(mario.point_view - mario.mario_w / 2, mario.y - mario.mario_h / 2, mario.point_view + mario.mario_w / 2, mario.y + mario.mario_h / 2)
 
-
 class Mario:
     def __init__(self):
-        self.x, self.y = Init_value.WINDOW_WIDTH//2, 110
+        self.x, self.y = Init_value.WINDOW_WIDTH//2 - 50, 110
         self.frame = 5
         self.image = load_image('Mario.png')
         self.dir = 1
@@ -139,8 +150,11 @@ class Mario:
         self.mario_w = 25
         self.mario_h = 25
         self.crash_key = 0
+        self.InvincibleTime = 0
+        self.state_super = 0
         self.state_dead = False
         self.state_floating = False
+        self.state_hit = False
         self.point_view = Init_value.WINDOW_WIDTH//2
         self.event_que = []
         self.cur_state = IdleState
@@ -150,10 +164,15 @@ class Mario:
         self.event_que.insert(0, event)
 
     def get_bb(self):
-        return self.x - 13, self.y - 13, self.x + 13, self.y + 13
+        return self.x - self.mario_w/2, self.y - self.mario_h/2, self.x + self.mario_w/2, self.y + self.mario_h/2
 
     def update(self):
         self.cur_state.do(self)
+        if self.state_hit:
+            self.InvincibleTime += Game_FrameWork.frame_time
+            if self.InvincibleTime > 1.5:
+                self.state_hit = False
+                self.InvincibleTime = 0
         # print(self.cur_state)
         if len(self.event_que) > 0:
             event = self.event_que.pop()
@@ -161,7 +180,6 @@ class Mario:
             self.cur_state.exit(self, event)
             self.cur_state = next_state_table[self.cur_state][event]
             self.cur_state.enter(self, event)
-
     def draw(self):
         self.cur_state.draw(self)
 
@@ -177,14 +195,43 @@ class Mario:
 
     def floating(self):
         left, right, bottom = int((self.x - self.mario_w/2) // server.map.tile_w), int((self.x + self.mario_w/2) // server.map.tile_w), int((self.y - self.mario_h/2) // server.map.tile_h)
-        # print("AAAA====================AAAA", ((server.TILE_W_N - bottom - 1) * server.map.tiles_Row) + left, bottom,
-        #       left, ((server.TILE_W_N - bottom - 1) * server.map.tiles_Row) + right, bottom, right)
-        # print(server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + left],server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + right])
         if server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + left] == 0\
                 and server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + right] == 0:
             self.state_floating = True
             return True
         return False
+
+    def hit(self):
+        self.state_hit = True
+        if self.state_super == 1:
+            self.juniorMario()
+        elif self.state_super == 2:
+            self.superMario()
+        else:
+            self.add_event(DEAD)
+        print("hitEnd")
+    def attack(self):
+        fireball = FireBall()
+        Game_World.add_object(fireball, 1)
+
+    def fireMario(self):
+        self.state_super = 2
+        self.mario_w = 30
+        self.mario_h = 50
+        self.image = load_image('fireMario.png')
+
+    def superMario(self):
+        self.state_super = 1
+        self.mario_w = 30
+        self.mario_h = 50
+        self.image = load_image('superMario.png')
+
+    def juniorMario(self):
+        self.state_super = 0
+        self.mario_w = 25
+        self.mario_h = 25
+        self.image = load_image('mario.png')
+        self.cur_state = JumpState
 
     def handle_events(self, event):
         if (event.type, event.key) in key_event_table:
@@ -198,6 +245,8 @@ class Mario:
                         self.dir *= -1
                     print("reason crash crash_key -1 down  , crash_key: ", self.crash_key)
             else:
+                if key_event == SPACE and self.state_super == 2:
+                    self.attack()
                 if self.cur_state == JumpState and key_event == 0:
                     self.dir = 1
                     self.crash_key += 1
