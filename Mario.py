@@ -188,15 +188,22 @@ class Mario:
         self.acceleration = 0
         print("landing acceleration=", self.acceleration)
         print(self.velocity)
-        if self.velocity > 0:
-            self.add_event(JUMP_END_2)
-        else:
-            self.add_event(JUMP_END_1)
+        if not self.state_dead:
+            if self.velocity > 0:
+                self.add_event(JUMP_END_2)
+            else:
+                self.add_event(JUMP_END_1)
 
     def floating(self):
         left, right, bottom = int((self.x - self.mario_w/2) // server.map.tile_w), int((self.x + self.mario_w/2) // server.map.tile_w), int((self.y - self.mario_h/2) // server.map.tile_h)
-        if server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + left] == 0\
-                and server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + right] == 0:
+        mapIndexL = server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + left]
+        mapIndexR = server.map.map[((server.TILE_W_N - bottom)*server.map.tiles_Row) + right]
+        if type(mapIndexL) is list:
+            mapIndexL = mapIndexL[0]
+        if type(mapIndexR) is list:
+            mapIndexR = mapIndexR[0]
+        if not(0 < mapIndexL < 20)\
+                and not(0 < mapIndexR < 20):
             self.state_floating = True
             return True
         return False
@@ -208,11 +215,12 @@ class Mario:
         elif self.state_super == 2:
             self.superMario()
         else:
-            self.add_event(DEAD)
+            if not self.state_dead:
+                self.add_event(DEAD)
         print("hitEnd")
     def attack(self):
-        fireball = FireBall()
-        Game_World.add_object(fireball, 1)
+        server.fireball = FireBall()
+        Game_World.add_object(server.fireball, 1)
 
     def fireMario(self):
         self.state_super = 2

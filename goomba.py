@@ -37,6 +37,7 @@ class Goomba:
         self.dir = -1
         self.speed = 0
         self.frame = 0
+        self.state_dead = False
         self.state_floating = False
         self.acceleration = 0
         self.build_behavior_tree()
@@ -64,48 +65,70 @@ class Goomba:
             return True
         return False
 
+    def dead(self):
+        self.state_dead = True
+        self.acceleration = 2
+
     def collide(self):
         nIndex = int(self.x // server.map.tile_w), int(self.y // server.map.tile_h)
         dx, dy = self.dir * self.speed * Game_FrameWork.frame_time, 3 * self.acceleration
         mx, my = self.x, self.y
         LB, RB, LT, RT = server.map.get_collide_map(self, Goomba.goomba_w, Goomba.goomba_h)
         if nIndex[1] + 1 < server.TILE_W_N and nIndex[1] >= 0:
-            if dx > 0:
-                for nIndex_y in range(RB[1], RT[1]):
-                    cIndex = nIndex[0] + 1, nIndex_y
-                    CheckCollideBlock = server.map.map[
-                        ((server.TILE_W_N - nIndex_y - 1) * server.map.tiles_Row) + cIndex[0]]
-                    if type(CheckCollideBlock) is list:
-                        CheckCollideBlock = CheckCollideBlock[0]
-                    if 0 < CheckCollideBlock < 20 and cIndex[0] * server.map.tile_w < (
-                            mx + dx + self.goomba_w / 2):
-                        self.x = int(cIndex[0] * server.map.tile_w - self.goomba_w / 2 - dx)
-                        self.dir *= -1
+            if not self.state_dead:
+                if dx > 0:
+                    for nIndex_y in range(RB[1], RT[1]):
+                        cIndex = nIndex[0] + 1, nIndex_y
+                        CheckCollideBlock = server.map.map[
+                            ((server.TILE_W_N - nIndex_y - 1) * server.map.tiles_Row) + cIndex[0]]
+                        if type(CheckCollideBlock) is list:
+                            CheckCollideBlock = CheckCollideBlock[0]
+                        if 0 < CheckCollideBlock < 20 and cIndex[0] * server.map.tile_w < (
+                                mx + dx + self.goomba_w / 2):
+                            self.x = int(cIndex[0] * server.map.tile_w - self.goomba_w / 2 - dx)
+                            self.dir *= -1
 
-            elif dx < 0:
-                for nIndex_y in range(LB[1], LT[1]):
-                    cIndex = nIndex[0] - 1, nIndex_y
-                    CheckCollideBlock = server.map.map[
-                        ((server.TILE_W_N - nIndex_y - 1) * server.map.tiles_Row) + cIndex[0]]
-                    if type(CheckCollideBlock) is list:
-                        CheckCollideBlock = CheckCollideBlock[0]
-                    if 0 < CheckCollideBlock < 20 and (cIndex[0] + 1) * server.map.tile_w > (
-                            mx + dx - self.goomba_w / 2):
-                        self.x = (cIndex[0] + 1) * server.map.tile_w + self.goomba_w / 2 - dx
-                        self.dir *= -1
+                elif dx < 0:
+                    for nIndex_y in range(LB[1], LT[1]):
+                        cIndex = nIndex[0] - 1, nIndex_y
+                        CheckCollideBlock = server.map.map[
+                            ((server.TILE_W_N - nIndex_y - 1) * server.map.tiles_Row) + cIndex[0]]
+                        if type(CheckCollideBlock) is list:
+                            CheckCollideBlock = CheckCollideBlock[0]
+                        if 0 < CheckCollideBlock < 20 and (cIndex[0] + 1) * server.map.tile_w > (
+                                mx + dx - self.goomba_w / 2):
+                            self.x = (cIndex[0] + 1) * server.map.tile_w + self.goomba_w / 2 - dx
+                            self.dir *= -1
 
-            if dy > 0:
-                for nIndex_x in range(LT[0], RT[0]):
-                    cIndex = nIndex_x, nIndex[1] + 1
-                    CheckCollideBlock = server.map.map[
-                        ((server.TILE_W_N - cIndex[1] - 1) * server.map.tiles_Row) + nIndex_x]
-                    if type(CheckCollideBlock) is list:
-                        CheckCollideBlock = CheckCollideBlock[0]
-                    if 0 < CheckCollideBlock < 20 and cIndex[1] * server.map.tile_h < (
-                            my + dy + self.goomba_h / 2):
-                        self.y = cIndex[1] * server.map.tile_h - self.goomba_h / 2 - 1
-                        self.speed = 0
+                if dy > 0:
+                    for nIndex_x in range(LT[0], RT[0]):
+                        cIndex = nIndex_x, nIndex[1] + 1
+                        CheckCollideBlock = server.map.map[
+                            ((server.TILE_W_N - cIndex[1] - 1) * server.map.tiles_Row) + nIndex_x]
+                        if type(CheckCollideBlock) is list:
+                            CheckCollideBlock = CheckCollideBlock[0]
+                        if 0 < CheckCollideBlock < 20 and cIndex[1] * server.map.tile_h < (
+                                my + dy + self.goomba_h / 2):
+                            self.y = cIndex[1] * server.map.tile_h - self.goomba_h / 2 - 1
+                            self.speed = 0
 
+                elif dy < 0:
+                    for nIndex_x in range(LB[0], RB[0]):
+                        cIndex = nIndex_x, nIndex[1] - 1
+                        print("cIndex=",cIndex[1] , nIndex[1])
+                        if cIndex[1] < 0:
+                            Game_World.remove_object(self)
+                            server.goomba.remove(self)
+                            break
+                        CheckCollideBlock = server.map.map[
+                            ((server.TILE_W_N - cIndex[1] - 1) * server.map.tiles_Row) + nIndex_x]
+                        if type(CheckCollideBlock) is list:
+                            CheckCollideBlock = CheckCollideBlock[0]
+                        if 0 < CheckCollideBlock < 20 and (cIndex[1] + 1) * server.map.tile_h > (
+                                my + dy - self.goomba_h / 2):
+                            self.y = (cIndex[1] + 1) * server.map.tile_h + self.goomba_h / 2 + 1
+                            self.acceleration = 0
+                            self.state_floating = False
             elif dy < 0:
                 for nIndex_x in range(LB[0], RB[0]):
                     cIndex = nIndex_x, nIndex[1] - 1
@@ -114,15 +137,7 @@ class Goomba:
                         Game_World.remove_object(self)
                         server.goomba.remove(self)
                         break
-                    CheckCollideBlock = server.map.map[
-                        ((server.TILE_W_N - cIndex[1] - 1) * server.map.tiles_Row) + nIndex_x]
-                    if type(CheckCollideBlock) is list:
-                        CheckCollideBlock = CheckCollideBlock[0]
-                    if 0 < CheckCollideBlock < 20 and (cIndex[1] + 1) * server.map.tile_h > (
-                            my + dy - self.goomba_h / 2):
-                        self.y = (cIndex[1] + 1) * server.map.tile_h + self.goomba_h / 2 + 1
-                        self.acceleration = 0
-                        self.state_floating = False
+
 
     def get_bb(self):
         return self.x - 12, self.y - 12, self.x + 12, self.y + 12
@@ -136,7 +151,7 @@ class Goomba:
             self.x += self.dir * self.speed * Game_FrameWork.frame_time
             self.y += 3 * self.acceleration
             self.collide()
-            if self.state_floating is False:
+            if self.state_floating is False and self.state_dead is False:
                 if self.floating():
                     print("floating")
             else:
@@ -144,10 +159,13 @@ class Goomba:
 
     def draw(self):
         window_left = server.mario.x - Init_value.WINDOW_WIDTH/2
-        if window_left + Init_value.WINDOW_WIDTH > self.x > window_left > 0:
-            Goomba.image.clip_draw((int(self.frame)+12) * Goomba.goomba_w, 0, Goomba.goomba_w, Goomba.goomba_h, self.x - window_left, self.y)
-        elif window_left <= 0:
-            Goomba.image.clip_draw((int(self.frame)+12) * Goomba.goomba_w, 0, Goomba.goomba_w, Goomba.goomba_h, self.x, self.y)
+        if self.state_dead:
+            Goomba.image.clip_draw(11 * Goomba.goomba_w, 0, Goomba.goomba_w, Goomba.goomba_h, self.x - window_left, self.y)
+        else:
+            if window_left + Init_value.WINDOW_WIDTH > self.x > window_left > 0:
+                Goomba.image.clip_draw((int(self.frame)+12) * Goomba.goomba_w, 0, Goomba.goomba_w, Goomba.goomba_h, self.x - window_left, self.y)
+            elif window_left <= 0:
+                Goomba.image.clip_draw((int(self.frame)+12) * Goomba.goomba_w, 0, Goomba.goomba_w, Goomba.goomba_h, self.x, self.y)
 
     def handle_event(self, event):
         pass
