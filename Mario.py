@@ -7,7 +7,7 @@ from fireball import FireBall
 RIGHT_DOWN, LEFT_DOWN, RIGHT_UP, LEFT_UP, JUMP_KEY, JUMP_END_1, JUMP_END_2, SPACE, FLOATING, DEAD, RESTART = range(11)
 
 PIXEL_PER_METER = (32.0 / 1.0)
-RUN_SPEED_KMPH = 20.0
+RUN_SPEED_KMPH = 10.0
 RUN_SPEED_MPM = (RUN_SPEED_KMPH * 1000.0 / 60.0)
 RUN_SPEED_MPS = (RUN_SPEED_MPM / 60.0)
 RUN_SPEED_PPS = (RUN_SPEED_MPS * PIXEL_PER_METER)
@@ -15,7 +15,6 @@ RUN_SPEED_PPS = (RUN_SPEED_MPS * PIXEL_PER_METER)
 TIME_PER_ACTION = 0.5
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 FRAMES_PER_ACTION = 8
-
 key_event_table = {
     (SDL_KEYDOWN, SDLK_RIGHT): RIGHT_DOWN,
     (SDL_KEYDOWN, SDLK_LEFT): LEFT_DOWN,
@@ -32,13 +31,16 @@ class IdleState:
             mario.dir = 1
         if event == LEFT_DOWN:
             mario.dir = -1
-        mario.velocity = 0
+        # mario.velocity = 0
+        mario.uniformlyAccel = 0
         mario.crash_key = 0
-
     def exit(mario, event):
         pass
 
     def do(mario):
+        mario.stop()
+        if mario.floating():
+            mario.add_event(FLOATING)
         if mario.dir >= 0:
             mario.frame = 5
         else:
@@ -52,15 +54,25 @@ class IdleState:
 class RunState:
     def enter(mario, event):
         print("                               #  RunState ENter")
-        mario.velocity = RUN_SPEED_PPS
+        if mario.velocity == 0:
+            mario.velocity = RUN_SPEED_PPS
+            mario.uniformlyAccel = 0
+            if event == RIGHT_DOWN:
+                mario.dir = 1
+            elif event == LEFT_DOWN:
+                mario.dir = -1
         if event == RIGHT_DOWN:
-            mario.dir = 1
+            # mario.dir = 1
+            mario.acc_dir = 1
             mario.crash_key += 1
+            mario.uniformlyAccel = 0
             print("Right - crash_key: ", mario.crash_key)
 
         elif event == LEFT_DOWN:
-            mario.dir = -1
+            # mario.dir = -1
+            mario.acc_dir = -1
             mario.crash_key += 1
+            mario.uniformlyAccel = 0
             print("Left - crash_key: ", mario.crash_key)
 
     def exit(mario, event):
@@ -71,12 +83,28 @@ class RunState:
             mario.frame = (mario.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * Game_FrameWork.frame_time) % 4 + 4
         else:
             mario.frame = (mario.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * Game_FrameWork.frame_time) % 4
+        if mario.velocity < RUN_SPEED_PPS * 3.4:
+            mario.uniformlyAccel += mario.velocity * Game_FrameWork.frame_time
+            if mario.acc_dir != mario.dir:
+                mario.velocity -= mario.uniformlyAccel
+            else:
+                mario.velocity += mario.uniformlyAccel
+            if mario.velocity < 0:
+                mario.velocity *= -1
+                mario.dir *= -1
+        elif mario.acc_dir != mario.dir:
+                mario.uniformlyAccel += mario.velocity * Game_FrameWork.frame_time
+                mario.velocity -= mario.uniformlyAccel
+                if mario.velocity < 0:
+                    mario.velocity *= -1
+                    mario.dir *= -1
+
         mario.x += mario.dir * mario.velocity * Game_FrameWork.frame_time
         if mario.floating():
             mario.add_event(FLOATING)
 
     def draw(mario):
-        print(mario.InvincibleTime)
+        # print(mario.InvincibleTime)
         if not(mario.InvincibleTime > 0 and int(mario.InvincibleTime // 0.1) & 1):
             if mario.dir >= 0:
                 mario.image.clip_draw(int(mario.frame + 1) * mario.mario_w, 0, mario.mario_w, mario.mario_h, mario.point_view, mario.y)
@@ -88,9 +116,15 @@ class JumpState:
     def enter(mario, event):
         print("                               #  JumpState ENter")
         print(mario.acceleration)
+        # mario.jumpBGM.play()
         if mario.acceleration <= 0 and not mario.state_floating:
             mario.acceleration = 5
-
+        mario.uniformlyAccel = 0
+        print("mario Crash_Key: ", mario.crash_key)
+        if mario.crash_key == 0:
+            mario.state_stop = True
+        else:
+            mario.state_stop = False
     def exit(mario, event):
         mario.state_floating = False
         pass
@@ -100,8 +134,26 @@ class JumpState:
             mario.frame = 9
         else:
             mario.frame = 4
-        mario.x += mario.dir * mario.velocity * Game_FrameWork.frame_time
-        # print(mario.dir, mario.velocity)
+        if mario.state_stop is True:
+            mario.stop()
+        else:
+            if mario.velocity < RUN_SPEED_PPS * 3.4:
+                mario.uniformlyAccel += mario.velocity * Game_FrameWork.frame_time
+                if mario.acc_dir != mario.dir:
+                    mario.velocity -= mario.uniformlyAccel
+                else:
+                    mario.velocity += mario.uniformlyAccel
+                if mario.velocity < 0:
+                    mario.velocity *= -1
+                    mario.dir *= -1
+            elif mario.acc_dir != mario.dir:
+                    mario.uniformlyAccel += mario.velocity * Game_FrameWork.frame_time
+                    mario.velocity -= mario.uniformlyAccel
+                    if mario.velocity < 0:
+                        mario.velocity *= -1
+                        mario.dir *= -1
+            mario.x += mario.dir * mario.velocity * Game_FrameWork.frame_time
+            # print(mario.dir, mario.velocity)
         mario.y += 3 * mario.acceleration
         mario.acceleration = mario.acceleration - 0.98 * 0.34
 
@@ -151,10 +203,15 @@ class Mario:
         self.mario_h = 25
         self.crash_key = 0
         self.InvincibleTime = 0
+        self.uniformlyAccel = 0
+        self.acc_dir = 1
+        self.state_stop = False
         self.state_super = 0
         self.state_dead = False
         self.state_floating = False
         self.state_hit = False
+        self.jumpBGM = load_music('jump.wav')
+        self.jumpBGM.set_volume(20)
         self.point_view = Init_value.WINDOW_WIDTH//2
         self.event_que = []
         self.cur_state = IdleState
@@ -176,10 +233,12 @@ class Mario:
         # print(self.cur_state)
         if len(self.event_que) > 0:
             event = self.event_que.pop()
-            # print(self.event_que, "update", event)
-            self.cur_state.exit(self, event)
-            self.cur_state = next_state_table[self.cur_state][event]
-            self.cur_state.enter(self, event)
+            print(self.cur_state, "update", event)
+            print(event in next_state_table[self.cur_state])
+            if event in next_state_table[self.cur_state]:
+                self.cur_state.exit(self, event)
+                self.cur_state = next_state_table[self.cur_state][event]
+                self.cur_state.enter(self, event)
     def draw(self):
         self.cur_state.draw(self)
 
@@ -187,12 +246,19 @@ class Mario:
         print("                               #  endOfJump")
         self.acceleration = 0
         print("landing acceleration=", self.acceleration)
-        print(self.velocity)
         if not self.state_dead:
-            if self.velocity > 0:
+            if self.velocity > 0 and self.state_stop is not True:
                 self.add_event(JUMP_END_2)
             else:
                 self.add_event(JUMP_END_1)
+
+    def stop(self):
+        if self.velocity > 0:
+            self.uniformlyAccel += self.velocity * Game_FrameWork.frame_time
+            self.velocity -= self.uniformlyAccel
+            if self.velocity < 0:
+                self.velocity = 0
+            self.x += self.dir * self.velocity * Game_FrameWork.frame_time
 
     def floating(self):
         left, right, bottom = int((self.x - self.mario_w/2) // server.map.tile_w), int((self.x + self.mario_w/2) // server.map.tile_w), int((self.y - self.mario_h/2) // server.map.tile_h)
@@ -256,19 +322,26 @@ class Mario:
                 if key_event == SPACE and self.state_super == 2:
                     self.attack()
                 if self.cur_state == JumpState and key_event == 0:
-                    self.dir = 1
                     self.crash_key += 1
-                    self.velocity = RUN_SPEED_PPS
                     # print('first')
+                    self.acc_dir = 1
+                    self.uniformlyAccel = 0
+                    self.state_stop = False
+                    if self.velocity == 0:
+                        self.velocity = RUN_SPEED_PPS
+                        self.dir = 1
                 elif self.cur_state == JumpState and key_event == 1:
-                    self.dir = -1
                     self.crash_key += 1
-                    self.velocity = RUN_SPEED_PPS
-                    # print('second')
+                    self.acc_dir = -1
+                    self.uniformlyAccel = 0
+                    self.state_stop = False
+                    if self.velocity == 0:
+                        self.velocity = RUN_SPEED_PPS
+                        self.dir = -1
                 elif self.cur_state == JumpState and key_event == 2:
                     self.crash_key -= 1
                     if self.crash_key == 0:
-                        self.velocity = 0
+                        self.state_stop = True
                     elif (self.dir == 1 and key_event == RIGHT_UP) or (self.dir == -1 and key_event == LEFT_UP):
                         self.dir *= -1
                     # print('thrid')
@@ -276,7 +349,7 @@ class Mario:
                     # print('four')
                     self.crash_key -= 1
                     if self.crash_key == 0:
-                        self.velocity = 0
+                        self.state_stop = True
                     elif (self.dir == 1 and key_event == RIGHT_UP) or (self.dir == -1 and key_event == LEFT_UP):
                         self.dir *= -1
 
@@ -285,7 +358,8 @@ next_state_table = {
     IdleState: {RIGHT_UP: RunState, LEFT_UP: RunState,
                 RIGHT_DOWN: RunState, LEFT_DOWN: RunState,
                 JUMP_KEY: JumpState, FLOATING: JumpState,
-                JUMP_END_1: IdleState, DEAD: DeadState},
+                JUMP_END_1: IdleState, JUMP_END_2: IdleState,
+                DEAD: DeadState},
     RunState: {RIGHT_UP: IdleState, LEFT_UP: IdleState,
                LEFT_DOWN: RunState, RIGHT_DOWN: RunState,
                JUMP_KEY: JumpState, FLOATING: JumpState,

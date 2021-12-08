@@ -12,6 +12,7 @@ running = True
 pIndex = None
 Index = None
 test_font = None
+mainBGM = None
 def enter():
     server.map = Map()
     server.mario = Mario()
@@ -24,11 +25,15 @@ def enter():
     Game_World.add_object(server.mario, 1)
     for g in server.goomba:
         Game_World.add_object(g, 1)
-
+    global mainBGM
+    mainBGM = load_music('main.mp3')
+    mainBGM.set_volume(20)
+    mainBGM.repeat_play()
 def exit():
     Game_World.clear()
 
 def update():    # 업데이트
+    global mainBGM
     Window_Pos()
     # print(len(server.goomba))
     for g in server.goomba:
@@ -39,7 +44,7 @@ def update():    # 업데이트
                         and not server.mario.state_hit:
                     # Game_World.remove_object(g)
                     # server.goomba.remove(g)
-                    g.dead()
+                    g.dead(1)
                     server.mario.acceleration = 3
                 elif not server.mario.state_hit:
                     server.mario.hit()
@@ -70,12 +75,15 @@ def predictCollide():
                     CheckCollideBlock = CheckCollideBlock[0]
                 if 0 < CheckCollideBlock < 20 and cIndex[0] * server.map.tile_w < (mx + dx + server.mario.mario_w / 2):
                         server.mario.x = int(cIndex[0]*server.map.tile_w - server.mario.mario_w/2 - dx)
-                elif CheckCollideBlock == 50:
+                elif CheckCollideBlock == 49:
                     server.map.map[((server.TILE_W_N - nIndex_y - 1) * server.map.tiles_Row) + cIndex[0]] = 0
                     server.mario.superMario()
-                elif CheckCollideBlock == 51:
+                elif CheckCollideBlock == 50:
                     server.map.map[((server.TILE_W_N - nIndex_y - 1) * server.map.tiles_Row) + cIndex[0]] = 0
                     server.mario.fireMario()
+                elif CheckCollideBlock == 51:
+                    server.map.map[((server.TILE_W_N - nIndex_y - 1) * server.map.tiles_Row) + cIndex[0]] = 0
+                    server.map.getCoin_number += 1
 
         elif dx < 0:
             for nIndex_y in range(LB[1], LT[1]):
@@ -88,12 +96,15 @@ def predictCollide():
                     CheckCollideBlock = CheckCollideBlock[0]
                 if 0 < CheckCollideBlock < 20 and (cIndex[0]+1) * server.map.tile_w > (mx + dx - server.mario.mario_w / 2):
                         server.mario.x = (cIndex[0]+1)*server.map.tile_w + server.mario.mario_w/2 - dx
-                elif CheckCollideBlock == 50:
+                elif CheckCollideBlock == 49:
                     server.map.map[((server.TILE_W_N - nIndex_y - 1) * server.map.tiles_Row) + cIndex[0]] = 0
                     server.mario.superMario()
-                elif CheckCollideBlock == 51:
+                elif CheckCollideBlock == 50:
                     server.map.map[((server.TILE_W_N - nIndex_y - 1) * server.map.tiles_Row) + cIndex[0]] = 0
                     server.mario.fireMario()
+                elif CheckCollideBlock == 51:
+                    server.map.map[((server.TILE_W_N - nIndex_y - 1) * server.map.tiles_Row) + cIndex[0]] = 0
+                    server.map.getCoin_number += 1
 
         if dy > 0:
             for nIndex_x in range(LT[0], RT[0]):
@@ -110,12 +121,15 @@ def predictCollide():
                     if CheckCollideBlock == 10:
                         server.map.QuestionBlock.append(cIndex)
                         server.map.frame = 0
-                elif CheckCollideBlock == 50:
+                elif CheckCollideBlock == 49:
                     server.map.map[((server.TILE_W_N - cIndex[1] - 1) * server.map.tiles_Row) + nIndex_x] = 0
                     server.mario.superMario()
-                elif CheckCollideBlock == 51:
+                elif CheckCollideBlock == 50:
                     server.map.map[((server.TILE_W_N - cIndex[1] - 1) * server.map.tiles_Row) + nIndex_x] = 0
                     server.mario.fireMario()
+                elif CheckCollideBlock == 51:
+                    server.map.map[((server.TILE_W_N - cIndex[1] - 1) * server.map.tiles_Row) + nIndex_x] = 0
+                    server.map.getCoin_number += 1
 
         elif dy < 0:
             for nIndex_x in range(LB[0], RB[0]):
@@ -129,12 +143,16 @@ def predictCollide():
                 if 0 < CheckCollideBlock < 20 and (cIndex[1]+1) * server.map.tile_h > (my + dy - server.mario.mario_h / 2):
                     server.mario.y = (cIndex[1]+1) * server.map.tile_h + server.mario.mario_h / 2 + 1
                     server.mario.landing()
-                elif CheckCollideBlock == 50:
+                    break
+                elif CheckCollideBlock == 49:
                     server.map.map[((server.TILE_W_N - cIndex[1] - 1) * server.map.tiles_Row) + nIndex_x] = 0
                     server.mario.superMario()
-                elif CheckCollideBlock == 51:
+                elif CheckCollideBlock == 50:
                     server.map.map[((server.TILE_W_N - cIndex[1] - 1) * server.map.tiles_Row) + nIndex_x] = 0
                     server.mario.fireMario()
+                elif CheckCollideBlock == 51:
+                    server.map.map[((server.TILE_W_N - cIndex[1] - 1) * server.map.tiles_Row) + nIndex_x] = 0
+                    server.map.getCoin_number += 1
 
 def collide(a, b):
     # fill here
@@ -153,6 +171,13 @@ def Window_Pos():
     if server.mario.x < Init_value.WINDOW_WIDTH/2:         # 맨 좌측에선 카메라를 움직이지 않느다.
         server.map.window_move_len = 0
         server.mario.point_view = server.mario.x
+    elif server.mario.x > server.map.tiles_Row*server.map.tile_w - Init_value.WINDOW_WIDTH/2:
+        server.map.window_move_len = Init_value.WINDOW_WIDTH - server.map.tiles_Row * server.map.tile_w
+        server.mario.point_view = server.mario.x + server.map.window_move_len
+        global mainBGM
+        mainBGM.stop()
+        exit()
+        Game_FrameWork.pop_state()
     else:
         server.map.window_move_len = Init_value.WINDOW_WIDTH/2 - server.mario.x
         server.mario.point_view = Init_value.WINDOW_WIDTH/2

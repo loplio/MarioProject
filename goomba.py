@@ -37,6 +37,7 @@ class Goomba:
         self.dir = -1
         self.speed = 0
         self.frame = 0
+        self.dead_num = 0
         self.state_dead = False
         self.state_floating = False
         self.acceleration = 0
@@ -65,9 +66,13 @@ class Goomba:
             return True
         return False
 
-    def dead(self):
+    def dead(self, num):
         self.state_dead = True
-        self.acceleration = 2
+        self.dead_num = num
+        if num == 1:
+            self.acceleration = 2
+        else:
+            self.acceleration = 0
 
     def collide(self):
         nIndex = int(self.x // server.map.tile_w), int(self.y // server.map.tile_h)
@@ -159,8 +164,10 @@ class Goomba:
 
     def draw(self):
         window_left = server.mario.x - Init_value.WINDOW_WIDTH/2
-        if self.state_dead:
+        if self.state_dead and self.dead_num == 1:
             Goomba.image.clip_draw(11 * Goomba.goomba_w, 0, Goomba.goomba_w, Goomba.goomba_h, self.x - window_left, self.y)
+        elif self.state_dead and self.dead_num == 2:
+            Goomba.image.clip_composite_draw(12 * Goomba.goomba_w, 0, Goomba.goomba_w, Goomba.goomba_h, 3.141592, 'h', self.x - window_left, self.y, Goomba.goomba_w, Goomba.goomba_h)
         else:
             if window_left + Init_value.WINDOW_WIDTH > self.x > window_left > 0:
                 Goomba.image.clip_draw((int(self.frame)+12) * Goomba.goomba_w, 0, Goomba.goomba_w, Goomba.goomba_h, self.x - window_left, self.y)

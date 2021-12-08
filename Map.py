@@ -1,12 +1,16 @@
 from pico2d import *
 import Init_value
 import server
+import Game_FrameWork
+TIME_PER_ACTION = 0.5
+ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
+FRAMES_PER_ACTION = 4
 class Map:
     image = None
-    tiles_Row = None
+    tiles_Row = 184
     map = [
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, [51, 0], [51, 0], [51, 0], 0, 0, 0, 0, [51, 0], [51, 0], [51, 0],
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -17,7 +21,7 @@ class Map:
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 11,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, [51, 0], [51, 0], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -32,7 +36,7 @@ class Map:
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 30, 31, 32, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 39, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # 23개
 
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, [10, 1], 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, [10, 2], 0, 0, 0, 0, 0, 0, 0,
         25, 26, 27, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0,
         1, 1, 1, 0, 0, 0, 11, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         25, 26, 27, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -51,7 +55,7 @@ class Map:
         0, 0, 0, 0, 2, 2, 2, 0, 0, 0, 0, 0, 0, 29, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # 23개
 
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, [51, 0], [51, 0], 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -59,12 +63,12 @@ class Map:
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 29, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # 23개
 
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, [10, 0], 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 9, [10, 0], 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 41, 0, 0, 0, 0, 2, 0, 0, 0, 2,
         0, 0, 0, 0, 0, 1, [10, 0], 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, [51, 0], [51, 0], [51, 0], 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 29, 0, 0, 0, 0, 0, 0, 0, 0, 0,  # 23개
 
@@ -73,7 +77,7 @@ class Map:
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 36, 37, 0, 0, 0, 2, 2, 2, 2, 2,
         47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 16, 17, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 15, 16, 17, 0, 0, 0, 0, [51, 0], [51, 0], [51, 0], 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 29, 0, 0, 28, 28, 28, 28, 28, 0, 0,  # 23개
 
@@ -82,11 +86,11 @@ class Map:
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 8, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 40, 40, 40, 37, 0, 0, 0, 0, 0, 0, 0,
         46, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, [10, 2], 2, 0, 0, 0, 0, 0, 0, 0, 0,
-        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 12, 13, 14, 0, 0, 0,
+        0, 0, 0, 0, [51, 0], [51, 0], [51, 0], 0, 0, 0, 0, 18, 0, 0, 0, 0, 0, 12, 13, 14, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
         2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 29, 0, 0, 4, 22, 4, 20, 4, 0, 0,  # 23개
 
-        0, 0, 0, 0, 0, 0, 0, 0, 45, 0, 0, [10, 2], 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 8,
+        0, 0, 0, 0, 0, 0, 0, 0, 45, 0, [10, 0], [10, 0], 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 8,
         0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 47, 0, 45, 0, 0, 0,
         0, 0, 2, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 7, 8, 0, 0, 0, 5, 6, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 40, 40, 40, 40, 40, 37, 0, 0, 0, 0, 47, 0,
@@ -95,7 +99,7 @@ class Map:
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2,
         2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 29, 0, 28, 23, 23, 23, 23, 23, 28, 0,  # 23개
 
-        0, 0, 0, 0, 0, 0, 0, 0, 45, 0, [10, 1], 0, 0, 0, 0, 0, 0, 7, 8, 0, 0, 5, 6,
+        0, 0, 0, 0, 0, 0, 0, 0, 45, 0, 0, 0, 0, 0, 0, 0, 0, 7, 8, 0, 0, 5, 6,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 46, 0, 45, 0, 0, 0,
         0, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 0, 0, 0, 5, 6, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0, 0, 35, 40, 40, 40, 40, 40, 40, 40, 37, 0, 0, 0, 46, 0,
@@ -148,8 +152,8 @@ class Map:
         self.QuestionBlock = []
         self.BrickBlock = []
         self.frame = 0
-        if Map.tiles_Row == None:
-            Map.tiles_Row = 184
+        self.getCoin_number = 0
+        self.coin_frame = 0
         if Map.image == None:
             Map.image = load_image('tiles.png')
 
@@ -159,7 +163,18 @@ class Map:
         for tile in Map.map:
             if type(tile) is list:
                 tile = tile[0]
-            if (index % Map.tiles_Row + 1) * self.tile_w + self.window_move_len >= 0 and (index % Map.tiles_Row)*self.tile_w + self.window_move_len <= Init_value.WINDOW_WIDTH:
+            if (index % Map.tiles_Row + 1) * self.tile_w + self.window_move_len >= 0 and (index % Map.tiles_Row)*self.tile_w + self.window_move_len <= Init_value.WINDOW_WIDTH\
+                    and tile == 51:
+                Map.image.clip_draw(0, 0, self.tile_w, self.tile_h, (index % Map.tiles_Row) * self.tile_w + self.window_move_len + 16,
+                                    464 - (index // Map.tiles_Row) * self.tile_h)
+                Map.image.clip_draw(int(self.coin_frame + 1) * self.tile_w, (tile // 5) * self.tile_h, self.tile_w, self.tile_h,
+                                    (index % Map.tiles_Row) * self.tile_w + self.window_move_len + 16,
+                                    464 - (index // Map.tiles_Row) * self.tile_h)
+            elif (index % Map.tiles_Row + 1) * self.tile_w + self.window_move_len >= 0 and (index % Map.tiles_Row)*self.tile_w + self.window_move_len <= Init_value.WINDOW_WIDTH:
+                if tile == 50 or tile == 49:
+                    Map.image.clip_draw(0, 0, self.tile_w, self.tile_h,
+                                        (index % Map.tiles_Row) * self.tile_w + self.window_move_len + 16,
+                                        464 - (index // Map.tiles_Row) * self.tile_h)
                 Map.image.clip_draw((tile % 5) * self.tile_w, (tile // 5) * self.tile_h, self.tile_w, self.tile_h, (index % Map.tiles_Row)*self.tile_w + self.window_move_len + 16, 464 - (index // Map.tiles_Row)*self.tile_h)
             index += 1
         if len(self.QuestionBlock) != 0 or len(self.BrickBlock) != 0:
@@ -173,9 +188,9 @@ class Map:
                         Map.image.clip_draw(0, 2*self.tile_h, self.tile_w, self.tile_h, qb[0]*self.tile_w + self.window_move_len + 16, qb[1]*self.tile_h + self.tile_h/2 + 2*(10 - self.frame))
                     if self.frame > 10:
                         if Map.map[qb[0] + (server.TILE_W_N - qb[1] - 1) * self.tiles_Row][1] == 1:     # and server.TILE_W_N >= qb[1] + 2
-                            Map.map[qb[0] + (server.TILE_W_N - qb[1] - 2) * self.tiles_Row] = 50
+                            Map.map[qb[0] + (server.TILE_W_N - qb[1] - 2) * self.tiles_Row] = 49
                         elif Map.map[qb[0] + (server.TILE_W_N - qb[1] - 1) * self.tiles_Row][1] == 2:
-                            Map.map[qb[0] + (server.TILE_W_N - qb[1] - 2) * self.tiles_Row] = 51
+                            Map.map[qb[0] + (server.TILE_W_N - qb[1] - 2) * self.tiles_Row] = 50
                         Map.map[qb[0] + (server.TILE_W_N - qb[1] - 1) * self.tiles_Row] = 3
 
                 if self.frame > 10:
@@ -190,7 +205,7 @@ class Map:
             self.frame += 1
 
     def update(self):
-        pass
+        self.coin_frame = (self.coin_frame + FRAMES_PER_ACTION * ACTION_PER_TIME * Game_FrameWork.frame_time) % 4
 
     def get_bb(self, tile):
         return tile[0] - self.tile_w/2, tile[1] - self.tile_h/2, tile[0] + self.tile_w/2, tile[1] + self.tile_h/2
